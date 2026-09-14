@@ -2,11 +2,14 @@
 
 HiPass의 Windows 설치파일과 앱 업데이트를 제공하는 공식 배포 저장소입니다.
 
+- [공식 다운로드](https://hipass.despitethat.com/download/)
 - [공식 사이트](https://hipass.despitethat.com/)
 - [사용 안내](https://hipass.despitethat.com/guide/)
 - [릴리스 목록](https://github.com/tkim-au/HiPass-Releases/releases)
 
-현재 공개 버전은 **0.1.1 · Windows 11 x64**입니다. [다운로드 안내](https://hipass.despitethat.com/download/) 또는 [0.1.1 릴리스](https://github.com/tkim-au/HiPass-Releases/releases/tag/v0.1.1)에서 `HiPass-0.1.1-Setup.exe`를 내려받으세요. Python과 앱 실행에 필요한 구성 요소가 설치파일에 포함됩니다.
+현재 정식 버전은 **0.1.3 · Windows 11 x64**입니다. [공식 다운로드](https://hipass.despitethat.com/download/) 또는 [0.1.3 릴리스](https://github.com/tkim-au/HiPass-Releases/releases/tag/v0.1.3)에서 `HiPass-0.1.3-Setup.exe`를 내려받으세요. Python과 앱 실행에 필요한 구성 요소가 설치파일에 포함됩니다.
+
+이번 버전에는 처음 사용 가이드, 프로젝트 주소 저장, 자동 보내기·받기 메뉴 분리가 포함됩니다. 기존 사용자는 앱 정보에서 업데이트를 확인할 수 있습니다. 이미 0.1.3 테스트 버전을 설치했다면 앱 바이너리가 같으므로 다시 설치할 필요가 없습니다.
 
 **Windows 코드 서명이 없는 설치파일입니다.** 설치·실행 시 ‘알 수 없는 게시자’ 또는 Microsoft Defender SmartScreen 경고가 나타날 수 있으며, PC 보안 정책에 따라 실행이 차단될 수 있습니다.
 
