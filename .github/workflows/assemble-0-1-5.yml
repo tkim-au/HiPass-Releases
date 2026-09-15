@@ -1,0 +1,163 @@
+name: Assemble reviewed HiPass 0.1.5 installer
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: hipass-draft-installer-0-1-5
+  cancel-in-progress: false
+jobs:
+  assemble:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Reassemble exact reviewed bytes without publishing
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          """Reassemble exact reviewed 0.1.5 installer bytes; never publish a release."""
+          import hashlib
+          import http.client
+          import json
+          import os
+          from pathlib import Path
+          import tempfile
+          import urllib.error
+          import urllib.request
+          from urllib.parse import quote, urlsplit
+          
+          REPO = "tkim-au/HiPass-Releases"
+          RELEASE = 388926581
+          TAG = "v0.1.5"
+          PREFIX = "_assembly-HiPass-0.1.5-prefix.bin"
+          PACKAGE = "HiPass.Desktop-0.1.5-stable-full.nupkg"
+          INSTALLER = "HiPass-0.1.5-Setup.exe"
+          EXPECTED = {
+              PREFIX: (4480000, "0da492596f4a2b0b9d6d0a7965bbf4f41d91cf3671bfb06641a6ff0b192d6a62"),
+              PACKAGE: (316335251, "f1fdbe8625a632dd07dc9d0722f4dc539966d52cfe4045e1beeb408bc93a331a"),
+              INSTALLER: (320815251, "564ec52484803b6edb46d128881cf08f1d9d3a1dab39ed183214c4212b719185"),
+          }
+          
+          
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  return None
+          
+          
+          def validate(asset, name):
+              size, digest = EXPECTED[name]
+              if (asset["name"] != name or asset["state"] != "uploaded" or asset["size"] != size
+                      or asset["digest"] != "sha256:" + digest):
+                  raise RuntimeError("Unexpected or incomplete asset: " + name)
+          
+          
+          def main():
+              if os.environ.get("GITHUB_REPOSITORY") != REPO:
+                  raise RuntimeError("Run only in the selected release repository.")
+              token = os.environ["GH_TOKEN"]
+              opener = urllib.request.build_opener(NoRedirect())
+              headers = {"Authorization": "Bearer " + token, "Accept": "application/vnd.github+json",
+                         "User-Agent": "HiPass-Verified-Draft-Assembly", "X-GitHub-Api-Version": "2022-11-28"}
+          
+              def api(path, method="GET"):
+                  if not path.startswith(f"/repos/{REPO}/") or method not in {"GET", "DELETE"}:
+                      raise RuntimeError("Out-of-scope API operation")
+                  with opener.open(urllib.request.Request("https://api.github.com" + path, method=method,
+                                                         headers=headers), timeout=60) as response:
+                      return {} if response.status == 204 else json.load(response)
+          
+              def draft():
+                  release = api(f"/repos/{REPO}/releases/{RELEASE}")
+                  if (release["id"] != RELEASE or release["draft"] is not True
+                          or release["tag_name"] != TAG or release["prerelease"] is not False):
+                      raise RuntimeError("Only the reviewed 0.1.5 official draft can be modified.")
+          
+              draft()
+              assets = api(f"/repos/{REPO}/releases/{RELEASE}/assets?per_page=100")
+              by_name = {asset["name"]: asset for asset in assets}
+              if len(by_name) != len(assets):
+                  raise RuntimeError("Duplicate asset names need review.")
+              validate(by_name[PACKAGE], PACKAGE)
+              if PREFIX in by_name:
+                  validate(by_name[PREFIX], PREFIX)
+              if INSTALLER in by_name:
+                  validate(by_name[INSTALLER], INSTALLER)
+                  print("Exact installer already exists; reusing it without replacement.")
+              else:
+                  validate(by_name[PREFIX], PREFIX)
+                  with tempfile.TemporaryDirectory(prefix="hipass-assembly-") as temporary:
+                      root = Path(temporary)
+                      for name in (PREFIX, PACKAGE):
+                          path = f"/repos/{REPO}/releases/assets/{by_name[name]['id']}"
+                          request_headers = {**headers, "Accept": "application/octet-stream"}
+                          try:
+                              response = opener.open(urllib.request.Request("https://api.github.com" + path,
+                                                                            headers=request_headers), timeout=120)
+                          except urllib.error.HTTPError as error:
+                              if error.code != 302:
+                                  raise
+                              location = error.headers["Location"]
+                              parsed = urlsplit(location)
+                              if (parsed.scheme != "https" or parsed.username is not None or parsed.password is not None
+                                      or parsed.hostname not in ("release-assets.githubusercontent.com", "objects.githubusercontent.com")):
+                                  raise RuntimeError("Unexpected download host.")
+                              # Read CDN URLs without forwarding the repository credential.
+                              response = opener.open(urllib.request.Request(location, headers={
+                                  "User-Agent": "HiPass-Verified-Draft-Assembly"}), timeout=120)
+                          size, digest = EXPECTED[name]
+                          actual_size, actual_digest = 0, hashlib.sha256()
+                          with response, (root / name).open("wb") as stream:
+                              while chunk := response.read(1024**2):
+                                  actual_size += len(chunk)
+                                  if actual_size > size:
+                                      raise RuntimeError("Oversized input.")
+                                  actual_digest.update(chunk)
+                                  stream.write(chunk)
+                          if actual_size != size or actual_digest.hexdigest() != digest:
+                              raise RuntimeError("Downloaded input does not match the reviewed bytes.")
+                      output = root / INSTALLER
+                      with output.open("xb") as target:
+                          for name in (PREFIX, PACKAGE):
+                              with (root / name).open("rb") as source:
+                                  while chunk := source.read(1024**2):
+                                      target.write(chunk)
+                      with output.open("rb") as stream:
+                          actual_digest = hashlib.file_digest(stream, "sha256").hexdigest()
+                      if output.stat().st_size != EXPECTED[INSTALLER][0] or actual_digest != EXPECTED[INSTALLER][1]:
+                          raise RuntimeError("Reassembled installer differs from the local reviewed installer.")
+                      draft()
+                      # Never delete, patch or overwrite an installer, including a partial upload.
+                      fresh = api(f"/repos/{REPO}/releases/{RELEASE}/assets?per_page=100")
+                      matches = [asset for asset in fresh if asset["name"] == INSTALLER]
+                      if matches:
+                          if len(matches) != 1:
+                              raise RuntimeError("Duplicate installer assets need review.")
+                          validate(matches[0], INSTALLER)
+                          print("Exact installer appeared during assembly; reusing it.")
+                      else:
+                          connection = http.client.HTTPSConnection("uploads.github.com", timeout=300)
+                          try:
+                              path = f"/repos/{REPO}/releases/{RELEASE}/assets?name={quote(INSTALLER)}"
+                              upload_headers = {**headers, "Content-Type": "application/octet-stream",
+                                                "Content-Length": str(output.stat().st_size)}
+                              with output.open("rb") as stream:
+                                  connection.request("POST", path, body=stream, headers=upload_headers)
+                                  response = connection.getresponse()
+                                  if response.status != 201:
+                                      raise RuntimeError("Installer upload returned HTTP " + str(response.status))
+                                  validate(json.load(response), INSTALLER)
+                          finally:
+                              connection.close()
+              if PREFIX in by_name:
+                  draft()
+                  prefix_path = f"/repos/{REPO}/releases/assets/{by_name[PREFIX]['id']}"
+                  validate(api(prefix_path), PREFIX)
+                  # Only this verified temporary header is removed, while the release is a draft.
+                  api(prefix_path, method="DELETE")
+              print("Exact installer SHA-256 verified. Temporary header removed. Draft remains unpublished.")
+          
+          
+          if __name__ == "__main__":
+              main()
+          PY
