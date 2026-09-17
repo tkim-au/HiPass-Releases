@@ -6,9 +6,11 @@ HiPass의 Windows 설치파일과 앱 업데이트를 제공하는 공개 배포
 - [사용 안내](https://hipass.despitethat.com/guide/)
 - [릴리스 목록](https://github.com/tkim-au/HiPass-Releases/releases)
 
-현재 정식 버전은 **0.1.7 · Windows 11 x64**입니다. [공식 다운로드](https://hipass.despitethat.com/download/) 또는 [0.1.7 릴리스](https://github.com/tkim-au/HiPass-Releases/releases/tag/v0.1.7)에서 `HiPass-0.1.7-Setup.exe`를 내려받으세요. Python과 앱 실행에 필요한 브라우저가 설치파일에 포함됩니다.
+현재 정식 버전은 **0.1.8 · Windows 11 x64**입니다. [공식 다운로드](https://hipass.despitethat.com/download/) 또는 [0.1.8 릴리스](https://github.com/tkim-au/HiPass-Releases/releases/tag/v0.1.8)에서 `HiPass-0.1.8-Setup.exe`를 내려받으세요. Python과 앱 실행에 필요한 브라우저가 설치파일에 포함됩니다.
 
-**두 PC 자동 키 연결**을 추가했습니다. 비밀키를 복사하거나 파일로 옮길 필요가 없습니다. 처음 연결할 때 아래 순서로 준비하세요.
+**전체 바이트 읽기 진단과 저장 후 검증**을 추가했습니다. 자동 보내기의 **읽기 진단**에서 실제 읽힌 크기·SHA-256·문서 형식을 확인하고, 수신 후 **작업 검증 기록**에서 최종 저장 해시를 확인하세요. 진단과 전송에는 같은 바이트를 사용하고, 암호화 작업의 진단 기록도 암호화합니다. 두 PC를 0.1.8로 업데이트한 뒤 확인하세요. DRM 우회·제거 기능은 포함하지 않습니다.
+
+**두 PC 자동 키 연결**도 유지합니다. 비밀키를 복사하거나 파일로 옮길 필요가 없습니다. 처음 연결할 때 아래 순서로 준비하세요.
 
 1. 양쪽 PC를 **0.1.7 이상**으로 업데이트하고, 같은 Overleaf 전송 전용 프로젝트를 설정합니다.
 2. **설정 → 암호화 설정**에서 한 PC는 **연결 시작**, 다른 PC는 **연결 참여**를 누릅니다. 열린 브라우저에서 로그인이 필요하면 완료하세요.
