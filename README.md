@@ -6,7 +6,9 @@ HiPass의 Windows 설치파일과 앱 업데이트를 배포하는 공식 공개
 - [사용 안내](https://hipass.despitethat.com/guide/)
 - [릴리스 목록](https://github.com/tkim-au/HiPass-Releases/releases)
 
-현재 정식 버전은 **0.1.9 · Windows 11 x64**입니다. [0.1.9 릴리스](https://github.com/tkim-au/HiPass-Releases/releases/tag/v0.1.9)에서 `HiPass-0.1.9-Setup.exe`를 내려받거나 앱에서 업데이트를 확인하세요.
+현재 정식 버전은 **0.1.10 · Windows 11 x64**입니다. [0.1.10 릴리스](https://github.com/tkim-au/HiPass-Releases/releases/tag/v0.1.10)에서 `HiPass-0.1.10-Setup.exe`를 내려받거나 앱에서 업데이트를 확인하세요.
+
+0.1.10은 Python 파일 읽기에서 서로 다른 조회 방식의 파일 ID 차이를 실제 변경으로 판단하던 조건을 수정했습니다. 두 번 독립적으로 읽은 전체 길이·SHA-256을 확인하며, 계속 실패하면 경로 정보 변경·열린 파일 정보 변경·내용 불일치를 구분해 안내합니다. 실제 발신 환경에서는 같은 원본으로 새 전송을 시작해 확인하세요.
 
 데스크톱의 수동·자동 보내기 화면에서 **일반 / JSON / 자동**을 선택할 수 있습니다. 기본값은 자동이며 두 화면의 마지막 선택을 각각 기억합니다.
 
